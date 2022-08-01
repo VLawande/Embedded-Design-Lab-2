@@ -1,0 +1,23 @@
+The purpose of this lab was to practice Memory mapping between the DE1-SoC board and the C++ being written in MobaXterm using Linux, to practice boolean logic and bitshifting in C++, and to break into object-oriented-programming by breaking up functions into classes and object.
+
+All scripts in the lab contain the same functions and global variables used for memory mapping. First, the physical addresses LW_BRIDGE_BASE and FINAL_PHYSICAL_ADDRESS of the computer register we will be writing to are defined. Then LLW_BRIDGE_SPAN is defined as the difference between the two earlier defined addresses, and the LED and switch offsets are defined.
+
+The Initialize() function takes in the pointer fd, and assigns it to point to the computer's memory address. After confirming that the memory address could be found and opened, the mmap command is used to create a virtual base for the other functions to use, which is returned to the user.
+
+The Finalize() funciton takes in the virtual base and the pointer fd, and unmaps the virtual base from the pointer.
+
+The RegisterWrite() function writes a value to a specific memory register using the virtual base from earlier and a register offset.
+
+The RegisterRead() function returns the value assigned to a specific register, and takes in the virtual base and the register offset for the register that is being read.
+
+The Write One LED script enables the user to write the state (ie. turn on or off) 1 of 10 red LEDs that are present on the board. The function takes in a virtual base, the index of the LED that will be turned on and the state that LED will be written as. The RegisterRead() function is then called, and the virtual base and LED register offset are used to find the current state of all LEDs on the board, which is set to the variable num and is a 10 bit binary number. If the user inputted state is 0 (ie. the LED is being turned off), then num is subtracted by 0x1 bitshifted left by the index of the LED the user is targetting, producing a new desired state. This new state is then written to the LED base using the RegisterWrite function. Otherwise, if the state is 1 (ie the LED is being turned on), then state is shifted right by the index of the LED that is being turned on, and an or statement is used to add the shifted state to num. This new num is then written to the LED base.
+    Visual example. Say no LEDs are turned on and you want to turn on led number 5. Num is 0000000000, which is then or'd with 0000100000 becoming 000010000. This state is then written onto the LED base, which makes the 5th LED turn on.
+
+The Read One Switch script enables the user to read in the state (either 1 or 0) of a specific switch within the register. Just like the WriteOneLED() function, the variable value is set to the state of all the switches. This value is rightshifted by the switchNum and then an and statement is called with the number 1. This value is then returned to the user.
+    Visual example. Assume switched 1, 5, and 9 are turned on (state = 1000100010) and you want to read the value of switch 4. value is set to 1000100010, and is then right shifted by 4 (value = 100010). This number is then anded with 0x1, resulting in the final returned value being 000000. 
+
+The Push Button script allows the user to push one of the 4 buttons and choose 1 of 4 options. Note that all 4 options use the RegisterRead() and RegisterWrite() functions to change the value of the LED base. Choosing to push button 0 will increment the value of the LED base by 1. Choosing to push button 1 will decrement the value of the LED base by 1. Choosing to push button 2 will shift the value of the LED base right by one bit. Choosign to push button 3 will shift the value of the LED base left by 1 bit.
+
+The Push Button Class script organizes the functions written in the previous function into a class titled DE1SoCfpga. This class is integrated into the main funciton where DE1SoCfpga is defined as an object, and the functions are called using the syntax object.functionName(). Also, the Initialize() and Finalize() functions have been renamed DE1SoCfpga() and ~DE1SoCfpga() and are automatically called whenever the class is initialized in program.
+
+The Push Button 2 Classes Script organizes the Push Button Class script into 2 classes, DE1SoCfpga and LEDControl. LEDControl is a inheirited class of DE1SoCfpga, and includes the 5 functions WriteAllLeds(), Write1Led(), ReadAllSwitches(), Read1Switch() and PushButtonGet().
